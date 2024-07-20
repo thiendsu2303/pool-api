@@ -17,16 +17,23 @@ public class PoolController {
 
     @PostMapping("/append")
     public ResponseEntity<Map<String, String>> appendOrInsertPool(@RequestBody Map<String, Object> request) {
-        long poolId = ((Number) request.get("poolId")).longValue();
+        Long poolId = request.get("poolId") != null ? ((Number) request.get("poolId")).longValue() : null;
         List<Integer> poolValues = (List<Integer>) request.get("poolValues");
+        if (poolId == null) {
+            throw new IllegalArgumentException("poolId must not be null");
+        }
+
         String status = poolService.appendOrInsertPool(poolId, poolValues);
         return ResponseEntity.ok(Map.of("status", status));
     }
 
     @PostMapping("/query")
     public ResponseEntity<Map<String, Object>> queryPool(@RequestBody Map<String, Object> request) {
-        long poolId = ((Number) request.get("poolId")).longValue();
-        double percentile = ((Number) request.get("percentile")).doubleValue();
+        Long poolId = request.get("poolId") != null ? ((Number) request.get("poolId")).longValue() : null;
+        Double percentile = request.get("percentile") != null ? ((Number) request.get("percentile")).doubleValue() : null;
+        if (poolId == null || percentile == null) {
+            throw new IllegalArgumentException("poolId and percentile must not be null");
+        }
         Map<String, Object> response = poolService.queryPool(poolId, percentile);
         return ResponseEntity.ok(response);
     }

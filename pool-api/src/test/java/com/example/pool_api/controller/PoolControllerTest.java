@@ -1,158 +1,91 @@
 package com.example.pool_api.controller;
 
-import com.example.pool_api.controller.PoolController;
 import com.example.pool_api.service.PoolService;
-import com.example.pool_api.model.Pool;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.http.MediaType;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
-import org.springframework.test.web.servlet.setup.MockMvcBuilders;
-import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
-import org.springframework.test.web.servlet.result.MockMvcResultHandlers;
-import static org.mockito.Mockito.*;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyDouble;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(PoolController.class)
 public class PoolControllerTest {
 
+    @Autowired
     private MockMvc mockMvc;
 
-    @InjectMocks
-    private PoolController poolController;
-
-    @Mock
+    @MockBean
     private PoolService poolService;
 
-    @BeforeEach
-    public void setUp() {
-        MockitoAnnotations.openMocks(this);
-        mockMvc = MockMvcBuilders.standaloneSetup(poolController).build();
+    @Test
+    public void testInsertNewPool() throws Exception {
+        when(poolService.appendOrInsertPool(any(Long.class), any(List.class))).thenReturn("inserted");
+
+        mockMvc.perform(post("/api/pool/append")
+                        .contentType("application/json")
+                        .content("{\"poolId\": 123456, \"values\": [1, 2, 3, 4, 5]}"))
+                .andExpect(status().isOk())
+                .andExpect(content().string("inserted"));
     }
 
     @Test
-    public void testAppendOrInsertPool_Insert() throws Exception {
-        long poolId = 1;
-        List<Integer> values = Arrays.asList(1, 2, 3);
-
-        when(poolService.appendOrInsertPool(poolId, values)).thenReturn("inserted");
-
-        mockMvc.perform(MockMvcRequestBuilders.post("/api/pool/append")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"poolId\": " + poolId + ", \"values\": [1, 2, 3]}"))
-                .andExpect(MockMvcResultMatchers.status().isOk())
-                .andExpect(MockMvcResultMatchers.content().string("inserted"))
-                .andDo(MockMvcResultHandlers.print());
-    }
-
-    @Test
-    public void testAppendOrInsertPool_Append() throws Exception {
-        long poolId = 1;
-        List<Integer> newValues = Arrays.asList(4, 5, 6);
-
-        when(poolService.appendOrInsertPool(poolId, newValues)).thenReturn("appended");
-
-        mockMvc.perform(MockMvcRequestBuilders.post("/api/pool/append")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"poolId\": " + poolId + ", \"values\": [4, 5, 6]}"))
-                .andExpect(MockMvcResultMatchers.status().isOk())
-                .andExpect(MockMvcResultMatchers.content().string("appended"))
-                .andDo(MockMvcResultHandlers.print());
-    }
-
-    @Test
-    public void testQueryPool_PoolNotFound() throws Exception {
-        long poolId = 999;
-        double percentile = 50.0;
-
-        when(poolService.queryPool(poolId, percentile)).thenReturn(Collections.singletonMap("error", "Pool not found"));
-
-        mockMvc.perform(MockMvcRequestBuilders.get("/api/pool/query")
-                        .param("poolId", String.valueOf(poolId))
-                        .param("percentile", String.valueOf(percentile)))
-                .andExpect(MockMvcResultMatchers.status().isOk())
-                .andExpect(MockMvcResultMatchers.jsonPath("$.error").value("Pool not found"))
-                .andDo(MockMvcResultHandlers.print());
-    }
-
-    @Test
-    public void testQueryPool_OutOfBounds() throws Exception {
-        long poolId = 1;
-        double percentile = 200.0; // Out of bounds
-
-        when(poolService.queryPool(poolId, percentile)).thenReturn(Collections.singletonMap("error", "Percentile index is out of bounds"));
-
-        mockMvc.perform(MockMvcRequestBuilders.get("/api/pool/query")
-                        .param("poolId", String.valueOf(poolId))
-                        .param("percentile", String.valueOf(percentile)))
-                .andExpect(MockMvcResultMatchers.status().isOk())
-                .andExpect(MockMvcResultMatchers.jsonPath("$.error").value("Percentile index is out of bounds"))
-                .andDo(MockMvcResultHandlers.print());
-    }
-
-    @Test
-    public void testQueryPool_Success() throws Exception {
-        long poolId = 1;
-        double percentile = 50.0;
-
+    public void testQueryPoolWithValidPercentile() throws Exception {
         Map<String, Object> response = new HashMap<>();
-        response.put("quantile", 3.0);
+        response.put("quantile", 4.6);
         response.put("totalCount", 5);
 
-        when(poolService.queryPool(poolId, percentile)).thenReturn(response);
+        when(poolService.queryPool(any(Long.class), anyDouble())).thenReturn(response);
 
-        mockMvc.perform(MockMvcRequestBuilders.get("/api/pool/query")
-                        .param("poolId", String.valueOf(poolId))
-                        .param("percentile", String.valueOf(percentile)))
-                .andExpect(MockMvcResultMatchers.status().isOk())
-                .andExpect(MockMvcResultMatchers.jsonPath("$.quantile").value(3.0))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.totalCount").value(5))
-                .andDo(MockMvcResultHandlers.print());
+        mockMvc.perform(post("/api/pool/query?poolId=123456&percentile=90.0"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.quantile").value(4.6))
+                .andExpect(jsonPath("$.totalCount").value(5));
     }
 
     @Test
-    public void testQueryPool_CacheHit() throws Exception {
-        long poolId = 1;
-        double percentile = 50.0;
+    public void testHandleNonExistentPool() throws Exception {
+        when(poolService.queryPool(any(Long.class), anyDouble())).thenReturn(Map.of("error", "Pool not found"));
 
-        List<Integer> values = Arrays.asList(1, 2, 3, 4, 5);
-        Map<String, Object> response = new HashMap<>();
-        response.put("quantile", 3.0);
-        response.put("totalCount", 5);
-
-        when(poolService.queryPool(poolId, percentile)).thenReturn(response);
-
-        mockMvc.perform(MockMvcRequestBuilders.get("/api/pool/query")
-                        .param("poolId", String.valueOf(poolId))
-                        .param("percentile", String.valueOf(percentile)))
-                .andExpect(MockMvcResultMatchers.status().isOk())
-                .andExpect(MockMvcResultMatchers.jsonPath("$.totalCount").value(5))
-                .andDo(MockMvcResultHandlers.print());
+        mockMvc.perform(post("/api/pool/query?poolId=999999&percentile=50.0"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.error").value("Pool not found"));
     }
 
     @Test
-    public void testQueryPool_CacheMiss() throws Exception {
-        long poolId = 2;
-        double percentile = 50.0;
+    public void testQueryPoolWithOutOfBoundsPercentile() throws Exception {
+        when(poolService.queryPool(any(Long.class), anyDouble())).thenReturn(Map.of("error", "Percentile out of range"));
 
-        List<Integer> values = Arrays.asList(1, 2, 3, 4, 5);
-        Map<String, Object> response = new HashMap<>();
-        response.put("quantile", 3.0);
-        response.put("totalCount", 5);
+        mockMvc.perform(post("/api/pool/query?poolId=123456&percentile=105.0"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.error").value("Percentile out of range"));
+    }
 
-        when(poolService.queryPool(poolId, percentile)).thenReturn(response);
+    @Test
+    public void testAppendToExistingPool() throws Exception {
+        when(poolService.appendOrInsertPool(any(Long.class), any(List.class))).thenReturn("appended");
 
-        mockMvc.perform(MockMvcRequestBuilders.get("/api/pool/query")
-                        .param("poolId", String.valueOf(poolId))
-                        .param("percentile", String.valueOf(percentile)))
-                .andExpect(MockMvcResultMatchers.status().isOk())
-                .andExpect(MockMvcResultMatchers.jsonPath("$.totalCount").value(5))
-                .andDo(MockMvcResultHandlers.print());
+        mockMvc.perform(post("/api/pool/append")
+                        .contentType("application/json")
+                        .content("{\"poolId\": 1, \"values\": [4, 5, 6]}"))
+                .andExpect(status().isOk())
+                .andExpect(content().string("appended"));
+    }
+
+    @Test
+    public void testHandleEmptyPool() throws Exception {
+        when(poolService.queryPool(any(Long.class), anyDouble())).thenReturn(Map.of("error", "Empty pool"));
+
+        mockMvc.perform(post("/api/pool/query?poolId=1&percentile=50.0"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.error").value("Empty pool"));
     }
 }

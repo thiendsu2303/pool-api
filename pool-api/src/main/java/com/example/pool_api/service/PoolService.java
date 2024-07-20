@@ -11,6 +11,8 @@ public class PoolService {
     private final Map<Long, Pool> poolMap = new HashMap<>();
 
     public String appendOrInsertPool(long poolId, List<Integer> poolValues) {
+        Objects.requireNonNull(poolId, "poolId must not be null");
+
         Pool pool = poolMap.getOrDefault(poolId, new Pool(poolId));
         if (pool.getPoolValues().isEmpty()) {
             pool.appendValues(poolValues);
@@ -23,6 +25,9 @@ public class PoolService {
     }
 
     public Map<String, Object> queryPool(long poolId, double percentile) {
+        Objects.requireNonNull(poolId, "poolId must not be null");
+        Objects.requireNonNull(percentile, "percentile must not be null");
+
         Pool pool = poolMap.get(poolId);
         if (pool == null) {
             return Map.of("error", "Pool not found");
