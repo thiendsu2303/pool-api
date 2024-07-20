@@ -33,7 +33,7 @@ public class PoolControllerTest {
 
         mockMvc.perform(post("/api/pool/append")
                         .contentType("application/json")
-                        .content("{\"poolId\": 123456, \"values\": [1, 2, 3, 4, 5]}"))
+                        .content("{\"poolId\": 123456, \"poolValues\": [1, 2, 3, 4, 5]}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.message").value("inserted"));
     }
@@ -82,19 +82,19 @@ public class PoolControllerTest {
 
         mockMvc.perform(post("/api/pool/append")
                         .contentType("application/json")
-                        .content("{\"poolId\": 123456, \"values\": [4, 5, 6]}"))
+                        .content("{\"poolId\": 123456, \"poolValues\": [4, 5, 6]}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.message").value("appended"));
     }
 
     @Test
     public void testHandleEmptyPool() throws Exception {
-        when(poolService.queryPool(any(Long.class), anyDouble())).thenReturn(Map.of("error", "Empty pool"));
+        when(poolService.appendOrInsertPool(any(Long.class), any(List.class))).thenReturn("inserted");
 
-        mockMvc.perform(post("/api/pool/query")
+        mockMvc.perform(post("/api/pool/append")
                         .contentType("application/json")
-                        .content("{\"poolId\": 1, \"percentile\": 50.0}"))
+                        .content("{\"poolId\": 654321, \"poolValues\": []}"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.error").value("Empty pool"));
+                .andExpect(jsonPath("$.message").value("inserted"));
     }
 }

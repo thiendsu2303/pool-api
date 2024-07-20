@@ -9,7 +9,6 @@ This project implements a REST API in Java with Spring Boot. The API provides tw
 3. [Running the Application](#running-the-application)
 4. [API Endpoints](#api-endpoints)
 5. [Testing](#testing)
-6. [Performance Considerations](#performance-considerations)
 7. [Contributing](#contributing)
 8. [License](#license)
 

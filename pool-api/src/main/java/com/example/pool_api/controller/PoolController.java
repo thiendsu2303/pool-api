@@ -24,7 +24,7 @@ public class PoolController {
         }
 
         String status = poolService.appendOrInsertPool(poolId, poolValues);
-        return ResponseEntity.ok(Map.of("status", status));
+        return ResponseEntity.ok(Map.of("message", status));
     }
 
     @PostMapping("/query")
