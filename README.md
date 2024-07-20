@@ -90,7 +90,7 @@ Queries the specified pool and returns the quantile for the given percentile alo
 ### Unit Tests
 Unit tests are located in src/test/java/com/example/pool_api/controller/PoolControllerTest.java.
 
-Unit tests are located in src/test/java/com/example/pool_api/controller/PoolControllerTest.java.
+To launch the Unit Test are defined in this file. You just need to launch PoolControllerTest.java file in IDE.
 
 Example test cases:
 
@@ -100,8 +100,3 @@ Example test cases:
 - Test Handle Non-Existent Pool: Validates response when querying a non-existent pool.
 - Test Query Pool with Out-of-Bounds Percentile: Validates response for an out-of-bounds percentile.
 - Test Handle Empty Pool: Validates response when querying an empty pool.
-## Contributing
-Contributions are welcome! Please submit a pull request with your changes. Make sure to follow the coding style and include tests for new features or bug fixes.
-
-## License
-This project is licensed under the MIT License - see the LICENSE file for details.
