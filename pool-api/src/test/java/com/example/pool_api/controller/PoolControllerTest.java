@@ -14,8 +14,9 @@ import java.util.Map;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyDouble;
 import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(PoolController.class)
 public class PoolControllerTest {
@@ -34,7 +35,7 @@ public class PoolControllerTest {
                         .contentType("application/json")
                         .content("{\"poolId\": 123456, \"values\": [1, 2, 3, 4, 5]}"))
                 .andExpect(status().isOk())
-                .andExpect(content().string("inserted"));
+                .andExpect(jsonPath("$.message").value("inserted"));
     }
 
     @Test
@@ -45,7 +46,9 @@ public class PoolControllerTest {
 
         when(poolService.queryPool(any(Long.class), anyDouble())).thenReturn(response);
 
-        mockMvc.perform(post("/api/pool/query?poolId=123456&percentile=90.0"))
+        mockMvc.perform(post("/api/pool/query")
+                        .contentType("application/json")
+                        .content("{\"poolId\": 123456, \"percentile\": 90.0}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.quantile").value(4.6))
                 .andExpect(jsonPath("$.totalCount").value(5));
@@ -55,7 +58,9 @@ public class PoolControllerTest {
     public void testHandleNonExistentPool() throws Exception {
         when(poolService.queryPool(any(Long.class), anyDouble())).thenReturn(Map.of("error", "Pool not found"));
 
-        mockMvc.perform(post("/api/pool/query?poolId=999999&percentile=50.0"))
+        mockMvc.perform(post("/api/pool/query")
+                        .contentType("application/json")
+                        .content("{\"poolId\": 999999, \"percentile\": 50.0}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.error").value("Pool not found"));
     }
@@ -64,7 +69,9 @@ public class PoolControllerTest {
     public void testQueryPoolWithOutOfBoundsPercentile() throws Exception {
         when(poolService.queryPool(any(Long.class), anyDouble())).thenReturn(Map.of("error", "Percentile out of range"));
 
-        mockMvc.perform(post("/api/pool/query?poolId=123456&percentile=105.0"))
+        mockMvc.perform(post("/api/pool/query")
+                        .contentType("application/json")
+                        .content("{\"poolId\": 123456, \"percentile\": 105.0}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.error").value("Percentile out of range"));
     }
@@ -75,16 +82,18 @@ public class PoolControllerTest {
 
         mockMvc.perform(post("/api/pool/append")
                         .contentType("application/json")
-                        .content("{\"poolId\": 1, \"values\": [4, 5, 6]}"))
+                        .content("{\"poolId\": 123456, \"values\": [4, 5, 6]}"))
                 .andExpect(status().isOk())
-                .andExpect(content().string("appended"));
+                .andExpect(jsonPath("$.message").value("appended"));
     }
 
     @Test
     public void testHandleEmptyPool() throws Exception {
         when(poolService.queryPool(any(Long.class), anyDouble())).thenReturn(Map.of("error", "Empty pool"));
 
-        mockMvc.perform(post("/api/pool/query?poolId=1&percentile=50.0"))
+        mockMvc.perform(post("/api/pool/query")
+                        .contentType("application/json")
+                        .content("{\"poolId\": 1, \"percentile\": 50.0}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.error").value("Empty pool"));
     }
